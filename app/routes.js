@@ -38,7 +38,7 @@ var upload = multer({storage: storage})
 
     app.post('/receipts', upload.single('image'), (req, res, next) => {
       insertDocuments(db, req, `uploads/${req.file.filename}`, () =>{
-          db.collection('receipts').insertOne({date: req.body.date, img: req.file.filename, desc:      req.body.desc, fav: false}, (err, result) => {
+          db.collection('receipts').insertOne({date: req.body.date, img: req.file.filename, desc:      req.body.desc, star: false}, (err, result) => {
           if (err) return console.log(err)
           console.log('saved to database')
           res.redirect('/profile')
@@ -62,11 +62,11 @@ var upload = multer({storage: storage})
     })
   }
 
-    app.put('/messages', (req, res) => {
+    app.put('/important', (req, res) => {
       db.collection('receipts')
-      .findOneAndUpdate({date: req.body.date, img: req.body.image, desc: req.body.desc}, {
+      .findOneAndUpdate({date: req.body.date, img: req.body.img, desc: req.body.desc}, {
         $set: {
-          fav: true
+          star: true
         }
       }, {
         sort: {_id: -1},
@@ -77,8 +77,23 @@ var upload = multer({storage: storage})
       })
     })
 
-    app.delete('/messages', (req, res) => {
-      db.collection('receipts').findOneAndDelete({date: req.body.date, img: req.body.src, desc: req.body.desc}, (err, result) => {
+    app.put('/unImportant', (req, res) => {
+      db.collection('receipts')
+      .findOneAndUpdate({date: req.body.date, img: req.body.img, desc: req.body.desc}, {
+        $set: {
+          star: false
+        }
+      }, {
+        sort: {_id: -1},
+        upsert: true
+      }, (err, result) => {
+        if (err) return res.send(err)
+        res.send(result)
+      })
+    })
+
+    app.delete('/receipts', (req, res) => {
+      db.collection('receipts').findOneAndDelete({date: req.body.date, img: req.body.img, desc: req.body.desc}, (err, result) => {
         if (err) return res.send(500, err)
         res.send('Receipt deleted!')
       })
